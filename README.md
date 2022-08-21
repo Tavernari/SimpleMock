@@ -1,3 +1,5 @@
+[![Swift](https://github.com/Tavernari/SimpleMock/actions/workflows/swift.yml/badge.svg?branch=main)](https://github.com/Tavernari/DIContainer/actions/workflows/swift.yml)[![Maintainability](https://api.codeclimate.com/v1/badges/4f79db0e9d2d9b596967/maintainability)](https://codeclimate.com/github/Tavernari/SimpleMock/maintainability)[![Test Coverage](https://api.codeclimate.com/v1/badges/4f79db0e9d2d9b596967/test_coverage)](https://codeclimate.com/github/Tavernari/SimpleMock/test_coverage)
+
 # 🪆 Simple Mock Swift
 
 It is a very simple Mock implementation made to help developers to create their own mocks easily.
