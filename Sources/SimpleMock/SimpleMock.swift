@@ -95,6 +95,8 @@ public enum MockError: Error, Equatable {
     case missingExpected(AnyHashable)
     /// When it try to chain the method with other, but it did not find a last valid method to chain.
     case couldNotAddInSequence(AnyHashable, AnyHashable)
+    /// When some unexpected method was called
+    case unexpectedMethod(AnyHashable)
 }
 
 public extension Mock {
@@ -164,10 +166,12 @@ public extension Mock {
         guard let result: R = try? self.result(sequence: sequence) else {
             
             let sequence = [method]
+            
+            self.methodsRegistered.append(sequence)
+            
             let result: R = try self.result(sequence: sequence)
             
             self.methodsResolvers.removeValue(forKey: sequence)
-            self.methodsRegistered.append(sequence)
             
             return result
         }
@@ -188,8 +192,16 @@ public extension Mock {
     /// Will check if expectations and resolved is matching as expected
     /// - Returns: Result of this comparsion
     @discardableResult func verify() throws -> Bool {
-
-        try self.methodsExpected.allSatisfy { sequence in
+        
+        return try self.methodsRegistered.allSatisfy { sequence in
+            
+            guard self.methodsExpected.contains(where: { $0 == sequence}) else {
+                
+                throw MockError.unexpectedMethod(sequence)
+            }
+            
+            return true
+        } && self.methodsExpected.allSatisfy { sequence in
             
             guard self.methodsRegistered.contains(where: { $0 == sequence}) else {
                 

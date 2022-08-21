@@ -13,8 +13,11 @@ final class SimpleMockTests: XCTestCase {
             XCTAssertEqual(error as? MockError, MockError.resolverEmpty)
         }
         
-        try serviceMock.verify()
-        
+        XCTAssertThrowsError(try serviceMock.verify(), "Should throw unexpectedMethod error") { error in
+            
+            let method = ServiceMock.Methods.load(id)
+            XCTAssertEqual(error as? MockError, MockError.unexpectedMethod([method]))
+        }
     }
     
     func testOneMockExpectation() throws {
@@ -37,7 +40,7 @@ final class SimpleMockTests: XCTestCase {
         XCTAssertNoThrow(try serviceMock.save(self.id, 10))
         XCTAssertEqual(try serviceMock.load(self.id), 10)
         
-        try self.serviceMock.verify()
+        XCTAssertNoThrow(try self.serviceMock.verify())
     }
     
     func testSequenceMockExpectationWithError() throws {
@@ -63,7 +66,7 @@ final class SimpleMockTests: XCTestCase {
             XCTAssertEqual(error as? MockError, .invalidCastType)
         }
         
-        XCTAssertThrowsError(try self.serviceMock.verify())
+        XCTAssertNoThrow(try self.serviceMock.verify())
     }
     
     func testWhenExpectationDidNotFoundAfterValidMethod() throws {
