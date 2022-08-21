@@ -34,7 +34,7 @@ final class SimpleMockTests: XCTestCase {
         try serviceMock.expect(method: .load(self.id), after: .save(self.id, 10)) { 10 }
         
         XCTAssertEqual(try serviceMock.load(self.id), 0)
-        try serviceMock.save(self.id, 10)
+        XCTAssertNoThrow(try serviceMock.save(self.id, 10))
         XCTAssertEqual(try serviceMock.load(self.id), 10)
         
         try self.serviceMock.verify()
