@@ -130,46 +130,55 @@ public extension Mock {
         return self
     }
     
+    private func result<R>(sequence: [Methods]) throws -> R {
+        
+        guard let resolver = self.resolvers[sequence] else {
+            
+            throw MockError.resolverEmpty
+        }
+        
+        guard let result = resolver() as? R else {
+        
+            throw MockError.invalidCastType
+        }
+        
+        return result
+    }
+    
     
     /// It only should be called by the respective method
     /// - Parameter method: name of the method
     /// - Returns: return what was implemented on the expectation resolver
     func resolve<R>(method: Methods) throws -> R {
         
-        let sequence = (self.registered.last ?? []) + [method]
+        var sequence = [method]
         
-        if let result = self.resolvers[sequence]?() as? R {
+        if let lastRegistered = self.registered.last {
             
-            self.resolvers.removeValue(forKey: sequence)
-            
-            if sequence.count > 1 {
-                
-                self.registered.removeLast()
-            }
-            
-            self.registered.append(sequence)
-            
-            return result
-            
-        } else {
+            sequence = lastRegistered + [method]
+        }
+        
+        guard let result: R = try? self.result(sequence: sequence) else {
             
             let sequence = [method]
-            
-            guard let resolver = self.resolvers[sequence] else {
-                
-                throw MockError.resolverEmpty
-            }
-            
-            guard let result = resolver() as? R else {
-            
-                throw MockError.invalidCastType
-            }
+            let result: R = try self.result(sequence: sequence)
             
             self.resolvers.removeValue(forKey: sequence)
             self.registered.append(sequence)
             
             return result
         }
+        
+        self.resolvers.removeValue(forKey: sequence)
+        
+        if sequence.count > 1 {
+            
+            self.registered.removeLast()
+        }
+        
+        self.registered.append(sequence)
+        
+        return result
     }
     
     
