@@ -57,7 +57,7 @@ XCTAssertEqual(try serviceMock.load(self.id), 0)
 XCTAssertNoThrow(try serviceMock.save(self.id, 10))
 XCTAssertEqual(try serviceMock.load(self.id), 10)
 
-try self.serviceMock.verify()
+XCTAssertNoThrow(try self.serviceMock.verify())
 ```
 
 ## Instalation

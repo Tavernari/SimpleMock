@@ -26,7 +26,7 @@ final class SimpleMockTests: XCTestCase {
         
         XCTAssertEqual(try serviceMock.load(self.id), 0)
         
-        try self.serviceMock.verify()
+        XCTAssertNoThrow(try self.serviceMock.verify())
     }
     
     func testSequenceMockExpectation() throws {
