@@ -67,13 +67,16 @@ public protocol Mock: AnyObject {
     /// Represents the Enum that will contains all methods reference to be expected.
     associatedtype Methods: Hashable
     
+    /// Callback that will be called when some method has to resolve the return value
+    typealias Resolver = () -> Any
+    
     /// Will store all expected sequences of methods.
     /// It is necessary because the default implementation works correctly.
     var methodsExpected: [[Methods]] { get set }
     
     /// Will store all resolvers that will return what was expected.
     /// It is necessary because the default implementation works correctly.
-    var methodsResolvers: [[Methods]: () -> Any] { get set }
+    var methodsResolvers: [[Methods]: Resolver] { get set }
     
     /// Will store all methods that was called by resolve function
     /// It is necessary because the default implementation works correctly.

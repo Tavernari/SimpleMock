@@ -29,7 +29,7 @@ class ServiceMock: Service, Mock {
         case load(_ id: String)
     }
     
-    var methodsResolvers: [[Methods] : () -> Any] = [:]
+    var methodsResolvers: [[Methods] : Resolver] = [:]
     var methodsExpected: [[Methods]] = []
     var methodsRegistered: [[Methods]] = []
     
