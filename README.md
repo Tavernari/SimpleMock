@@ -45,6 +45,21 @@ class ServiceMock: Service, Mock {
 }
 ```
 
+#### Test usage
+
+```Swift
+try serviceMock.expect(method: .load(self.id)) { 0 }
+
+try serviceMock.expect(method: .save(self.id, 10)) { Void() }
+try serviceMock.expect(method: .load(self.id), after: .save(self.id, 10)) { 10 }
+
+XCTAssertEqual(try serviceMock.load(self.id), 0)
+try serviceMock.save(self.id, 10)
+XCTAssertEqual(try serviceMock.load(self.id), 10)
+
+try self.serviceMock.verify()
+```
+
 ## Instalation
 
 ### Swift Package Manager
