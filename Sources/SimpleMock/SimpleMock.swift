@@ -193,19 +193,20 @@ public extension Mock {
     /// - Returns: Result of this comparsion
     @discardableResult func verify() throws -> Bool {
         
-        return try self.methodsRegistered.allSatisfy { sequence in
-            
-            guard self.methodsExpected.contains(where: { $0 == sequence}) else {
-                
-                throw MockError.unexpectedMethod(sequence)
-            }
-            
-            return true
-        } && self.methodsExpected.allSatisfy { sequence in
+        return try self.methodsExpected.allSatisfy { sequence in
             
             guard self.methodsRegistered.contains(where: { $0 == sequence}) else {
                 
                 throw MockError.missingExpected(sequence)
+            }
+            
+            return true
+
+        } && self.methodsRegistered.allSatisfy { sequence in
+            
+            guard self.methodsExpected.contains(where: { $0 == sequence}) else {
+                
+                throw MockError.unexpectedMethod(sequence)
             }
             
             return true
