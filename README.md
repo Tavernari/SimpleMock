@@ -29,9 +29,9 @@ class ServiceMock: Service, Mock {
         case load(_ id: String)
     }
     
-    var resolvers: [[Methods] : () -> Any] = [:]
-    var expecteds: [[Methods]] = []
-    var registered: [[Methods]] = []
+    var methodsResolvers: [[Methods] : () -> Any] = [:]
+    var methodsExpected: [[Methods]] = []
+    var methodsRegistered: [[Methods]] = []
     
     func save(_ id: String, _ value: Int) throws {
         

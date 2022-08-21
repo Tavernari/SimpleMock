@@ -40,9 +40,9 @@ import XCTest
 ///         case load(_ id: String)
 ///     }
 ///
-///     var resolvers: [[Methods] : () -> Any] = [:]
-///     var expecteds: [[Methods]] = []
-///     var registered: [[Methods]] = []
+///     var methodsResolvers: [[Methods] : () -> Any] = [:]
+///     var methodsExpected: [[Methods]] = []
+///     var methodsRegistered: [[Methods]] = []
 ///
 ///     func save(_ id: String, _ value: Int) throws {
 ///
@@ -69,15 +69,15 @@ public protocol Mock: AnyObject {
     
     /// Will store all expected sequences of methods.
     /// It is necessary because the default implementation works correctly.
-    var expecteds: [[Methods]] { get set }
+    var methodsExpected: [[Methods]] { get set }
     
     /// Will store all resolvers that will return what was expected.
     /// It is necessary because the default implementation works correctly.
-    var resolvers: [[Methods]: () -> Any] { get set }
+    var methodsResolvers: [[Methods]: () -> Any] { get set }
     
     /// Will store all methods that was called by resolve function
     /// It is necessary because the default implementation works correctly.
-    var registered: [[Methods]] { get set }
+    var methodsRegistered: [[Methods]] { get set }
 }
 
 
@@ -111,16 +111,16 @@ public extension Mock {
             
             let sequece = [method]
             
-            self.expecteds.append(sequece)
-            self.resolvers[sequece] = resolver
+            self.methodsExpected.append(sequece)
+            self.methodsResolvers[sequece] = resolver
             
-        } else if var lastSequence = self.expecteds.last, lastSequence.last == after {
+        } else if var lastSequence = self.methodsExpected.last, lastSequence.last == after {
             
             lastSequence.append(method)
             
-            self.expecteds.removeLast()
-            self.expecteds.append(lastSequence)
-            self.resolvers[lastSequence] = resolver
+            self.methodsExpected.removeLast()
+            self.methodsExpected.append(lastSequence)
+            self.methodsResolvers[lastSequence] = resolver
             
         } else if let after = after {
             
@@ -132,7 +132,7 @@ public extension Mock {
     
     private func result<R>(sequence: [Methods]) throws -> R {
         
-        guard let resolver = self.resolvers[sequence] else {
+        guard let resolver = self.methodsResolvers[sequence] else {
             
             throw MockError.resolverEmpty
         }
@@ -153,7 +153,7 @@ public extension Mock {
         
         var sequence = [method]
         
-        if let lastRegistered = self.registered.last {
+        if let lastRegistered = self.methodsRegistered.last {
             
             sequence = lastRegistered + [method]
         }
@@ -163,20 +163,20 @@ public extension Mock {
             let sequence = [method]
             let result: R = try self.result(sequence: sequence)
             
-            self.resolvers.removeValue(forKey: sequence)
-            self.registered.append(sequence)
+            self.methodsResolvers.removeValue(forKey: sequence)
+            self.methodsRegistered.append(sequence)
             
             return result
         }
         
-        self.resolvers.removeValue(forKey: sequence)
+        self.methodsResolvers.removeValue(forKey: sequence)
         
         if sequence.count > 1 {
             
-            self.registered.removeLast()
+            self.methodsRegistered.removeLast()
         }
         
-        self.registered.append(sequence)
+        self.methodsRegistered.append(sequence)
         
         return result
     }
@@ -186,9 +186,9 @@ public extension Mock {
     /// - Returns: Result of this comparsion
     @discardableResult func verify() throws -> Bool {
 
-        try self.expecteds.allSatisfy { sequence in
+        try self.methodsExpected.allSatisfy { sequence in
             
-            guard self.registered.contains(where: { $0 == sequence}) else {
+            guard self.methodsRegistered.contains(where: { $0 == sequence}) else {
                 
                 throw MockError.missingExpected(sequence)
             }
