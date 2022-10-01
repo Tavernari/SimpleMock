@@ -6,8 +6,6 @@
 //
 
 import Foundation
-import XCTest
-
 
 /// Mock is a protocol with generic methods to help the developer to implement it.
 /// It demands an Enum to define the processes that should expect.
