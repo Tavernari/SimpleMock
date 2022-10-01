@@ -33,7 +33,7 @@ final class SimpleMockTests: XCTestCase {
         
         try serviceMock.expect(method: .load(self.id)) { 0 }
         
-        try serviceMock.expect(method: .save(self.id, 10)) { Void() }
+        try serviceMock.expect(method: .save(self.id, 10))
         try serviceMock.expect(method: .load(self.id), after: .save(self.id, 10)) { 10 }
         
         XCTAssertEqual(try serviceMock.load(self.id), 0)
@@ -47,7 +47,7 @@ final class SimpleMockTests: XCTestCase {
         
         try serviceMock.expect(method: .load(self.id)) { 0 }
         
-        try serviceMock.expect(method: .save(self.id, 10)) { Void() }
+        try serviceMock.expect(method: .save(self.id, 10))
         try serviceMock.expect(method: .load(self.id), after: .save(self.id, 10)) { 10 }
         
         XCTAssertEqual(try serviceMock.load(id), 0)

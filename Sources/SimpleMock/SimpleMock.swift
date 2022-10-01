@@ -107,8 +107,8 @@ public extension Mock {
     ///   - resolver: the logic that will return some value related to the expected method
     /// - Returns: returns Self
     @discardableResult func expect<Result>(method: Methods,
-                        after: Methods? = nil,
-                        resolver: @escaping () -> Result) throws -> Self {
+                                           after: Methods? = nil,
+resolver: @escaping () -> Result = { Void() }) throws -> Self {
         
         if after == nil {
             
