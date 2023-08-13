@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "SimpleMock",
+    platforms: [.macOS(.v10_15), .driverKit(.v19), .iOS(.v11), .macCatalyst(.v13),.tvOS(.v11),.watchOS(.v4)],
     products: [
         .library(
             name: "SimpleMock",
