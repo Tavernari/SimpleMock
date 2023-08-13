@@ -95,143 +95,122 @@ open class Mock<Methods: Hashable> {
     /// Callback that will be called when some method has to resolve the return value
     public typealias Resolver = () -> Any
 
-    private var mockLogic = MockLogic()
+    private var methodsExpected: [[Methods]] = []
+    private var methodsResolvers: [[Methods]: Resolver] = [:]
+    private var methodsRegistered: [[Methods]] = []
 
     public init() { }
 
+    /// Will register all expectations and resolvers
+    /// - Parameters:
+    ///   - method: expected method
+    ///   - after: method that came before the current expected method
+    ///   - resolver: the logic that will return some value related to the expected method
+    /// - Returns: returns Self
     @discardableResult
     public func expect<Result>(method: Methods,
                                after: Methods? = nil,
                                resolver: @escaping () -> Result = { Void() }) throws -> Self {
-        try self.mockLogic.expect(method: method, after: after, resolver: resolver)
+
+        if after == nil {
+
+            let sequece = [method]
+
+            self.methodsExpected.append(sequece)
+            self.methodsResolvers[sequece] = resolver
+
+        } else if var lastSequence = self.methodsExpected.last, lastSequence.last == after {
+
+            lastSequence.append(method)
+
+            self.methodsExpected.removeLast()
+            self.methodsExpected.append(lastSequence)
+            self.methodsResolvers[lastSequence] = resolver
+
+        } else if let after = after {
+
+            throw MockError.couldNotAddInSequence(method, after)
+        }
+
         return self
     }
 
+    private func result<R>(sequence: [Methods]) throws -> R {
+
+        guard let resolver = self.methodsResolvers[sequence] else {
+
+            throw MockError.resolverEmpty
+        }
+
+        guard let result = resolver() as? R else {
+
+            throw MockError.invalidCastType
+        }
+
+        return result
+    }
+
+
+    /// It only should be called by the respective method
+    /// - Parameter method: name of the method
+    /// - Returns: return what was implemented on the expectation resolver
     public func resolve<R>(method: Methods) throws -> R {
-        return try self.mockLogic.resolve(method: method)
-    }
 
-    @discardableResult
-    public func verify() throws -> Bool {
-        return try self.mockLogic.verify()
-    }
+        var sequence = [method]
 
-    private class MockLogic {
-        typealias Resolver = () -> Any
+        if let lastRegistered = self.methodsRegistered.last {
 
-        var methodsExpected: [[AnyHashable]] = []
-        var methodsResolvers: [[AnyHashable]: Resolver] = [:]
-        var methodsRegistered: [[AnyHashable]] = []
-
-        /// Will register all expectations and resolvers
-        /// - Parameters:
-        ///   - method: expected method
-        ///   - after: method that came before the current expected method
-        ///   - resolver: the logic that will return some value related to the expected method
-        /// - Returns: returns Self
-        @discardableResult func expect<Result>(method: AnyHashable,
-                                               after: AnyHashable? = nil,
-                                               resolver: @escaping () -> Result = { Void() }) throws -> Self {
-
-            if after == nil {
-
-                let sequece = [method]
-
-                self.methodsExpected.append(sequece)
-                self.methodsResolvers[sequece] = resolver
-
-            } else if var lastSequence = self.methodsExpected.last, lastSequence.last == after {
-
-                lastSequence.append(method)
-
-                self.methodsExpected.removeLast()
-                self.methodsExpected.append(lastSequence)
-                self.methodsResolvers[lastSequence] = resolver
-
-            } else if let after = after {
-
-                throw MockError.couldNotAddInSequence(method, after)
-            }
-
-            return self
+            sequence = lastRegistered + [method]
         }
 
-        private func result<R>(sequence: [AnyHashable]) throws -> R {
+        guard let result: R = try? self.result(sequence: sequence) else {
 
-            guard let resolver = self.methodsResolvers[sequence] else {
-
-                throw MockError.resolverEmpty
-            }
-
-            guard let result = resolver() as? R else {
-
-                throw MockError.invalidCastType
-            }
-
-            return result
-        }
-
-
-        /// It only should be called by the respective method
-        /// - Parameter method: name of the method
-        /// - Returns: return what was implemented on the expectation resolver
-        func resolve<R>(method: AnyHashable) throws -> R {
-
-            var sequence = [method]
-
-            if let lastRegistered = self.methodsRegistered.last {
-
-                sequence = lastRegistered + [method]
-            }
-
-            guard let result: R = try? self.result(sequence: sequence) else {
-
-                let sequence = [method]
-
-                self.methodsRegistered.append(sequence)
-
-                let result: R = try self.result(sequence: sequence)
-
-                self.methodsResolvers.removeValue(forKey: sequence)
-
-                return result
-            }
-
-            self.methodsResolvers.removeValue(forKey: sequence)
-
-            if sequence.count > 1 {
-
-                self.methodsRegistered.removeLast()
-            }
+            let sequence = [method]
 
             self.methodsRegistered.append(sequence)
 
+            let result: R = try self.result(sequence: sequence)
+
+            self.methodsResolvers.removeValue(forKey: sequence)
+
             return result
         }
 
+        self.methodsResolvers.removeValue(forKey: sequence)
 
-        /// Will check if expectations and resolved is matching as expected
-        /// - Returns: Result of this comparsion
-        @discardableResult func verify() throws -> Bool {
+        if sequence.count > 1 {
 
-            return try self.methodsExpected.allSatisfy { sequence in
+            self.methodsRegistered.removeLast()
+        }
 
-                guard self.methodsRegistered.contains(where: { $0 == sequence}) else {
+        self.methodsRegistered.append(sequence)
 
-                    throw MockError.missingExpected(sequence)
-                }
+        return result
+    }
 
-                return true
 
-            } && self.methodsRegistered.allSatisfy { sequence in
+    /// Will check if expectations and resolved is matching as expected
+    /// - Returns: Result of this comparsion
+    @discardableResult
+    public func verify() throws -> Bool {
 
-                guard self.methodsExpected.contains(where: { $0 == sequence}) else {
+        return try self.methodsExpected.allSatisfy { sequence in
 
-                    throw MockError.unexpectedMethod(sequence)
-                }
+            guard self.methodsRegistered.contains(where: { $0 == sequence}) else {
 
-                return true
+                throw MockError.missingExpected(sequence)
             }
+
+            return true
+
+        } && self.methodsRegistered.allSatisfy { sequence in
+
+            guard self.methodsExpected.contains(where: { $0 == sequence}) else {
+
+                throw MockError.unexpectedMethod(sequence)
+            }
+
+            return true
         }
     }
 }
