@@ -41,7 +41,12 @@ final class ActorServiceMockTests: XCTestCase {
 
         try await serviceMock.verify()
 
-        await self.fulfillment(of: [expectation])
+        #if swift(>=6.0)
+            await self.fulfillment(of: [expectation])
+        #else
+            self.wait(for: [expectation], timeout: 1)
+        #endif
+
     }
 
     func testConcurrentExpectations() async throws {
