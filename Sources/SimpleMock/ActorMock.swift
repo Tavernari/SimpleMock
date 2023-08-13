@@ -183,7 +183,8 @@ public extension ActorMockLogic {
 
     /// Will check if expectations and resolved is matching as expected
     /// - Returns: Result of this comparsion
-    @discardableResult func verify() throws -> Bool {
+    @discardableResult
+    func verify() throws -> Bool {
 
         defer {
 
@@ -192,23 +193,9 @@ public extension ActorMockLogic {
             self.methodsRegistered.removeAll()
         }
 
-        return try self.methodsExpected.allSatisfy { sequence in
+        try methodsExpected.ensureAllElementsAreContainedIn(methodsRegistered, errorGenerator: { MockError.missingExpected($0) })
+        try methodsRegistered.ensureAllElementsAreContainedIn(methodsExpected, errorGenerator: { MockError.unexpectedMethod($0) })
 
-            guard self.methodsRegistered.contains(where: { $0 == sequence}) else {
-
-                throw ActorMockError.missingExpected(sequence)
-            }
-
-            return true
-
-        } && self.methodsRegistered.allSatisfy { sequence in
-
-            guard self.methodsExpected.contains(where: { $0 == sequence}) else {
-
-                throw ActorMockError.unexpectedMethod(sequence)
-            }
-
-            return true
-        }
+        return true
     }
 }

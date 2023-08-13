@@ -194,24 +194,10 @@ open class Mock<Methods: Hashable> {
     @discardableResult
     public func verify() throws -> Bool {
 
-        return try self.methodsExpected.allSatisfy { sequence in
+        try methodsExpected.ensureAllElementsAreContainedIn(methodsRegistered, errorGenerator: { MockError.missingExpected($0) })
+        try methodsRegistered.ensureAllElementsAreContainedIn(methodsExpected, errorGenerator: { MockError.unexpectedMethod($0) })
 
-            guard self.methodsRegistered.contains(where: { $0 == sequence}) else {
-
-                throw MockError.missingExpected(sequence)
-            }
-
-            return true
-
-        } && self.methodsRegistered.allSatisfy { sequence in
-
-            guard self.methodsExpected.contains(where: { $0 == sequence}) else {
-
-                throw MockError.unexpectedMethod(sequence)
-            }
-
-            return true
-        }
+        return true
     }
 }
 
