@@ -19,9 +19,6 @@ public protocol ActorMock: AnyObject {
 
     /// Represents the Enum that will contains all methods reference to be expected.
     associatedtype Methods: Hashable
-
-    /// Callback that will be called when some method has to resolve the return value
-    typealias Resolver = () -> Any
 }
 
 
@@ -32,7 +29,7 @@ public extension ActorMock {
     @discardableResult
     func expect<Result>(method: Methods,
                         after: Methods? = nil,
-                        resolver: @escaping () -> Result = { Void() }) async throws -> Self {
+                        resolver: @escaping () async throws  -> Result = { Void() }) async throws -> Self {
 
         try await self.mockLogic.expect(method: method, after: after, resolver: resolver)
         return self
@@ -54,7 +51,7 @@ public actor ActorMockLogic {
 
     static let instance = ActorMockLogic()
 
-    typealias Resolver = () -> Any
+    typealias Resolver = () async throws -> Any
 
     /// Will store all expected sequences of methods.
     /// It is necessary because the default implementation works correctly.
@@ -102,7 +99,7 @@ public extension ActorMockLogic {
     /// - Returns: returns Self
     @discardableResult func expect<Result>(method: AnyHashable,
                                            after: AnyHashable? = nil,
-                                           resolver: @escaping () -> Result = { Void() }) throws -> Self {
+                                           resolver: @escaping () async throws -> Result = { Void() }) throws -> Self {
 
         if after == nil {
 
@@ -127,14 +124,14 @@ public extension ActorMockLogic {
         return self
     }
 
-    private func result<R>(sequence: [AnyHashable]) throws -> R {
+    private func result<R>(sequence: [AnyHashable]) async throws -> R {
 
         guard let resolver = self.methodsResolvers[sequence] else {
 
             throw ActorMockError.resolverEmpty
         }
 
-        guard let result = resolver() as? R else {
+        guard let result = try await resolver() as? R else {
 
             throw ActorMockError.invalidCastType
         }
@@ -146,7 +143,7 @@ public extension ActorMockLogic {
     /// It only should be called by the respective method
     /// - Parameter method: name of the method
     /// - Returns: return what was implemented on the expectation resolver
-    func resolve<R>(method: AnyHashable) throws -> R {
+    func resolve<R>(method: AnyHashable) async throws -> R {
 
         var sequence = [method]
 
@@ -155,13 +152,13 @@ public extension ActorMockLogic {
             sequence = lastRegistered + [method]
         }
 
-        guard let result: R = try? self.result(sequence: sequence) else {
+        guard let result: R = try? await self.result(sequence: sequence) else {
 
             let sequence = [method]
 
             self.methodsRegistered.append(sequence)
 
-            let result: R = try self.result(sequence: sequence)
+            let result: R = try await self.result(sequence: sequence)
 
             self.methodsResolvers.removeValue(forKey: sequence)
 
